@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🟣 JARVIS Neon Voice Calculator</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;font-family:'Orbitron',sans-serif;}
+body{
+  margin:0;min-height:100vh;display:flex;
+  justify-content:center;align-items:center;
+  background:radial-gradient(circle at top,#3a0ca3,#000);
+  color:#d6b3ff;
+}
+.card{
+  width:95%;max-width:400px;padding:28px;
+  border-radius:22px;background:rgba(140,0,255,0.12);
+  backdrop-filter:blur(15px);
+  box-shadow:0 0 30px #c77dff;
+  text-align:center;
+}
+h1{margin:0;font-size:22px;}
+.subtitle{font-size:12px;opacity:0.85;margin-bottom:12px;}
+.listen-btn{
+  width:100%;padding:14px;border:none;border-radius:14px;
+  font-size:15px;cursor:pointer;
+  background:linear-gradient(90deg,#9b5cff,#c77dff);
+  color:#000;box-shadow:0 0 20px #c77dff;
+}
+.heard,.result{margin-top:15px;font-size:13px;word-wrap:break-word;}
+.emoji{font-size:60px;margin-top:10px;}
+footer{margin-top:20px;font-size:11px;opacity:0.7;}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>🤖 JARVIS Calculator</h1>
+  <div class="subtitle">Neon • Multi-Language • Voice AI</div>
+
+  <button class="listen-btn" onclick="startListening()">🎤 Speak Calculation</button>
+
+  <div class="heard" id="heardText"></div>
+  <div class="result" id="result"></div>
+  <div class="emoji" id="emoji"></div>
+
+  <footer>Powered by AI Voice ⚡</footer>
+</div>
+
+<script>
+let voices = [];
+
+/* 🔊 LOAD VOICES PROPERLY */
+function loadVoices(){
+  voices = speechSynthesis.getVoices();
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+
+/* 🎙️ SPEAK WITH FORCE LANGUAGE */
+function speak(text, lang){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = 0.95;
+  u.pitch = 0.9;
+
+  const voice = voices.find(v => v.lang === lang);
+  if(voice) u.voice = voice;
+
+  speechSynthesis.speak(u);
+}
+
+/* 🔊 SPEAK EN → HI → TE */
+function speakAllLanguages(result){
+  speechSynthesis.cancel();
+
+  setTimeout(()=>speak(`The answer is ${result}`, "en-US"), 200);
+  setTimeout(()=>speak(`उत्तर ${result} है`, "hi-IN"), 2200);
+  setTimeout(()=>speak(`సమాధానం ${result}`, "te-IN"), 4200);
+}
+
+/* 🎤 LISTEN */
+function startListening(){
+  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!Speech){ alert("Speech not supported"); return; }
+
+  const r = new Speech();
+  r.lang = "en-US";
+  r.start();
+
+  r.onresult = e => {
+    const spoken = e.results[0][0].transcript.toLowerCase();
+    document.getElementById("heardText").innerText = "🧠 Input: " + spoken;
+    calculate(spoken);
+  };
+}
+
+/* 🧠 MULTI-LANG PARSER */
+function parseText(text){
+  const numbers={
+    zero:0, one:1, two:2, three:3, four:4, five:5,
+    six:6, seven:7, eight:8, nine:9, ten:10,
+    shunya:0, ek:1, do:2, teen:3, chaar:4, paanch:5,
+    chhe:6, saat:7, aath:8, nau:9, das:10,
+    sunna:0, okati:1, rendu:2, moodu:3, nalugu:4,
+    aidu:5, aaru:6, edu:7, enimidi:8, tommidi:9, padi:10
+  };
+
+  text=text
+    .replace(/plus|jod|kalupu/g,"+")
+    .replace(/minus|ghata|thagginchu/g,"-")
+    .replace(/times|guna|multiply|into/g,"*")
+    .replace(/divide|bhaag|bhaginchu/g,"/");
+
+  for(let w in numbers){
+    text=text.replace(new RegExp("\\b"+w+"\\b","g"),numbers[w]);
+  }
+  return text;
+}
+
+/* 🧮 CALCULATE */
+function calculate(text){
+  try{
+    const exp=parseText(text);
+    const result=eval(exp);
+    if(!isFinite(result)) throw "err";
+
+    document.getElementById("result").innerText="⚡ Result: "+result;
+    document.getElementById("emoji").innerText=
+      result>1000?"😲🔥":result>=0?"😄":"😢";
+
+    speakAllLanguages(result);
+
+  }catch{
+    document.getElementById("result").innerText="⚠ Error";
+    document.getElementById("emoji").innerText="😢";
+  }
+}
+</script>
+
+</body>
+</html>

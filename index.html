@@ -1,223 +1,197 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🟣 JARVIS Neon Voice Scientific Calculator</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+<title>JARVIS AI SCIENTIFIC MAX</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-*{box-sizing:border-box;font-family:'Orbitron',sans-serif;}
 body{
-  margin:0;min-height:100vh;display:flex;
-  justify-content:center;align-items:center;
-  background:radial-gradient(circle at top,#3a0ca3,#000);
-  color:#d6b3ff;
+margin:0;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#14001f,#4b0082,#001f3f);
+font-family:'Orbitron',sans-serif;
+color:white;
 }
+
 .card{
-  width:95%;max-width:420px;padding:28px;
-  border-radius:22px;background:rgba(140,0,255,0.12);
-  backdrop-filter:blur(15px);
-  box-shadow:0 0 30px #c77dff;
-  text-align:center;
-}
-h1{margin:0;font-size:22px;}
-.subtitle{font-size:12px;opacity:0.85;margin-bottom:12px;}
-
-.listen-btn, select{
-  width:100%;padding:12px;margin-top:8px;
-  border:none;border-radius:14px;
-  font-size:14px;cursor:pointer;
-  background:linear-gradient(90deg,#9b5cff,#c77dff);
-  color:#000;box-shadow:0 0 15px #c77dff;
+width:550px;
+padding:35px;
+border-radius:25px;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+box-shadow:0 0 60px #ff00ff;
+text-align:center;
 }
 
-.heard,.result{margin-top:15px;font-size:13px;word-wrap:break-word;}
-.emoji{font-size:60px;margin-top:10px;}
-footer{margin-top:20px;font-size:11px;opacity:0.7;}
-.toggle{margin-top:8px;font-size:12px;}
+h1{
+margin-bottom:20px;
+text-shadow:0 0 25px #ff00ff;
+}
+
+select,button{
+width:100%;
+padding:14px;
+margin-top:15px;
+border-radius:15px;
+border:none;
+font-size:16px;
+}
+
+select{
+background:#111;
+color:white;
+}
+
+button{
+background:linear-gradient(45deg,#ff00ff,#6a00ff);
+color:white;
+cursor:pointer;
+}
+
+.output{
+margin-top:15px;
+padding:12px;
+background:rgba(0,0,0,0.6);
+border-radius:12px;
+}
 </style>
 </head>
 
 <body>
 
 <div class="card">
-  <h1>🤖 JARVIS Scientific</h1>
-  <div class="subtitle">Voice • English • Hindi • Telugu</div>
+<h1>🤖 JARVIS AI SCIENTIFIC</h1>
 
-  <select id="languageSelect">
-    <option value="en-US">English</option>
-    <option value="hi-IN">Hindi</option>
-    <option value="te-IN">Telugu</option>
-  </select>
+<select id="language">
+<option value="en-US">English</option>
+<option value="hi-IN">Hindi</option>
+<option value="te-IN">Telugu</option>
+</select>
 
-  <button class="listen-btn" onclick="startListening()">🎤 Start Listening</button>
+<button onclick="startListening()">🎤 Start Listening</button>
+<button onclick="toggleContinuous()">🔁 Continuous Mode: OFF</button>
 
-  <div class="toggle">
-    <input type="checkbox" id="continuousToggle">
-    Continuous Listening Mode
-  </div>
-
-  <div class="heard" id="heardText"></div>
-  <div class="result" id="result"></div>
-  <div class="emoji" id="emoji"></div>
-
-  <footer>AI Voice Scientific Calculator ⚡</footer>
+<div class="output" id="heard">You said: ...</div>
+<div class="output" id="result">Result: ...</div>
 </div>
 
 <script>
-let voices=[];
-speechSynthesis.onvoiceschanged = () => {
-  voices = speechSynthesis.getVoices();
+
+let continuous=false;
+let recognition=null;
+
+function speak(text){
+let msg=new SpeechSynthesisUtterance(text);
+msg.lang=document.getElementById("language").value;
+speechSynthesis.cancel();
+speechSynthesis.speak(msg);
+}
+
+function startListening(){
+const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!Speech){ alert("Speech Recognition not supported"); return; }
+
+recognition=new Speech();
+recognition.lang=document.getElementById("language").value;
+recognition.continuous=continuous;
+
+recognition.onresult=function(e){
+let text=e.results[e.results.length-1][0].transcript.toLowerCase();
+document.getElementById("heard").innerHTML="You said: "+text;
+process(text);
 };
 
-/* SMART VOICE SELECTION */
-function getVoice(langCode){
-  return voices.find(v => v.lang.includes(langCode));
+recognition.onend=function(){
+if(continuous) recognition.start();
+};
+
+recognition.start();
 }
 
-function speak(text, lang){
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = 0.95;
-  u.pitch = 1;
-
-  const voice = getVoice(lang);
-  if(voice){
-    u.voice = voice;
-    u.lang = voice.lang;
-  } else {
-    u.lang = lang;
-  }
-
-  speechSynthesis.speak(u);
+function toggleContinuous(){
+continuous=!continuous;
+document.querySelectorAll("button")[1].innerText=
+"🔁 Continuous Mode: "+(continuous?"ON":"OFF");
 }
 
-/* SPEAK RESULT */
-function speakResult(result){
-  speechSynthesis.cancel();
-
-  setTimeout(()=>speak(`The answer is ${result}`,"en"),200);
-  setTimeout(()=>speak(`उत्तर ${result} है`,"hi"),2000);
-  setTimeout(()=>speak(`సమాధానం ${result}`,"te"),3800);
+function degToRad(deg){
+return deg*(Math.PI/180);
 }
 
-/* START LISTENING */
-function startListening(){
-  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!Speech){alert("Speech not supported");return;}
+function process(text){
 
-  const selectedLang = document.getElementById("languageSelect").value;
-  const isContinuous = document.getElementById("continuousToggle").checked;
+try{
 
-  const recognition = new Speech();
-  recognition.lang = selectedLang;
-  recognition.continuous = isContinuous;
+// -------- PERCENTAGE --------
+text=text.replace(/percentage of (\d+)/g,(m,n)=> n/100);
 
-  recognition.start();
+// -------- LOG BASE 10 --------
+text=text.replace(/log\s*(\d+)/g,(m,n)=> Math.log10(n));
 
-  recognition.onresult = e => {
-    const spoken = e.results[e.results.length-1][0].transcript.toLowerCase();
-    document.getElementById("heardText").innerText="🧠 You said: "+spoken;
-    calculate(spoken);
-  };
+// -------- NATURAL LOG --------
+text=text.replace(/ln\s*(\d+)/g,(m,n)=> Math.log(n));
+
+// -------- SQUARE ROOT --------
+text=text.replace(/square root of (\d+)/g,(m,n)=> Math.sqrt(n));
+
+// -------- TRIG FUNCTIONS (DEGREES) --------
+text=text.replace(/sin\s*(\d+)/g,(m,n)=> Math.sin(degToRad(n)));
+text=text.replace(/cos\s*(\d+)/g,(m,n)=> Math.cos(degToRad(n)));
+text=text.replace(/tan\s*(\d+)/g,(m,n)=> Math.tan(degToRad(n)));
+text=text.replace(/cosec\s*(\d+)/g,(m,n)=> 1/Math.sin(degToRad(n)));
+text=text.replace(/sec\s*(\d+)/g,(m,n)=> 1/Math.cos(degToRad(n)));
+text=text.replace(/cot\s*(\d+)/g,(m,n)=> 1/Math.tan(degToRad(n)));
+
+// -------- DERIVATIVE BASIC --------
+if(text.includes("derivative")){
+if(text.includes("sin")) return showResult("cos x");
+if(text.includes("cos")) return showResult("-sin x");
+if(text.includes("tan")) return showResult("sec² x");
+
+let match=text.match(/x\^(\d+)/);
+if(match){
+let n=parseInt(match[1]);
+return showResult(n+"x^"+(n-1));
+}
 }
 
-/* DEGREE TO RADIAN */
-function toRadians(angle){
-  return angle*(Math.PI/180);
+// -------- NORMAL OPERATORS --------
+text=text.replace(/plus/g,"+")
+.replace(/minus/g,"-")
+.replace(/times|multiply|into/g,"*")
+.replace(/divide/g,"/");
+
+let result=eval(text);
+
+showResult(result);
+
+}catch{
+document.getElementById("result").innerHTML="❌ Invalid Expression";
+speak("Invalid expression");
+}
 }
 
-/* PARSER */
-function parseText(text){
+function showResult(result){
 
-  /* English */
-  text=text
-    .replace(/plus|add/g,"+")
-    .replace(/minus|subtract/g,"-")
-    .replace(/times|multiply/g,"*")
-    .replace(/divide/g,"/")
-    .replace(/square/g,"**2")
-    .replace(/cube/g,"**3");
+document.getElementById("result").innerHTML="Result: "+result;
 
-  /* Hindi */
-  text=text
-    .replace(/जोड़/g,"+")
-    .replace(/घटाना/g,"-")
-    .replace(/गुणा/g,"*")
-    .replace(/भाग/g,"/")
-    .replace(/वर्ग/g,"**2");
+let lang=document.getElementById("language").value;
 
-  /* Telugu */
-  text=text
-    .replace(/కూడా/g,"+")
-    .replace(/తగ్గించు/g,"-")
-    .replace(/గుణించు/g,"*")
-    .replace(/భాగించు/g,"/")
-    .replace(/వర్గం/g,"**2");
-
-  return text;
+if(lang=="hi-IN"){
+speak("उत्तर है "+result);
+}
+else if(lang=="te-IN"){
+speak("సమాధానం "+result);
+}
+else{
+speak("The answer is "+result);
+}
 }
 
-/* CALCULATE */
-function calculate(text){
-  try{
-    let exp=parseText(text);
-
-    /* Derivatives */
-    if(text.includes("derivative of cos")){
-      document.getElementById("result").innerText="⚡ d/dx cos(x) = -sin(x)";
-      speakResult("-sin x");
-      return;
-    }
-
-    if(text.includes("derivative of sin")){
-      document.getElementById("result").innerText="⚡ d/dx sin(x) = cos(x)";
-      speakResult("cos x");
-      return;
-    }
-
-    if(text.includes("derivative of tan")){
-      document.getElementById("result").innerText="⚡ d/dx tan(x) = sec²(x)";
-      speakResult("sec square x");
-      return;
-    }
-
-    /* Integrals */
-    if(text.includes("integral of cos")){
-      document.getElementById("result").innerText="⚡ ∫cos(x)dx = sin(x) + C";
-      speakResult("sin x plus C");
-      return;
-    }
-
-    if(text.includes("integral of sin")){
-      document.getElementById("result").innerText="⚡ ∫sin(x)dx = -cos(x) + C";
-      speakResult("minus cos x plus C");
-      return;
-    }
-
-    /* Scientific functions */
-    exp=exp
-      .replace(/sin\s*(\d+)/g,(m,x)=>Math.sin(toRadians(x)))
-      .replace(/cos\s*(\d+)/g,(m,x)=>Math.cos(toRadians(x)))
-      .replace(/tan\s*(\d+)/g,(m,x)=>Math.tan(toRadians(x)))
-      .replace(/log\s*(\d+)/g,(m,x)=>Math.log10(x));
-
-    const result = Function('"use strict";return ('+exp+')')();
-
-    if(!isFinite(result)) throw "error";
-
-    document.getElementById("result").innerText="⚡ Result: "+result;
-    document.getElementById("emoji").innerText=
-      result>1000?"😲🔥":result>=0?"😄":"😢";
-
-    speakResult(result);
-
-  }catch{
-    document.getElementById("result").innerText="⚠ Invalid Expression";
-    document.getElementById("emoji").innerText="😢";
-  }
-}
 </script>
 
 </body>
